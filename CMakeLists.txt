@@ -16,11 +16,14 @@ endif ()
 # third-party libraries
 set(ABSL_ENABLE_INSTALL ON)
 set(ABSL_PROPAGATE_CXX_STD ON)
+set(BUILD_TESTING OFF)
+set(ABSL_BUILD_TESTING OFF)
+
 add_subdirectory(third_party/abseil-cpp)
 
 add_subdirectory(third_party/re2)
 
-add_compile_definitions(GGML_CUDA_MMV_Y=3)  # for large vocab
+add_compile_definitions(GGML_CUDA_MMV_Y=2)  # for large vocab
 include_directories(third_party/ggml/include/ggml third_party/ggml/src)
 add_subdirectory(third_party/ggml)
 
@@ -41,8 +44,16 @@ file(GLOB CPP_SOURCES
 
 set_source_files_properties(${CPP_SOURCES} PROPERTIES COMPILE_FLAGS "-pedantic-errors")
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
+endif()
+
 add_library(qwen STATIC qwen.cpp)
 target_link_libraries(qwen PUBLIC re2::re2 ggml)
+
+
+add_library(qwen_tokenizer STATIC qwen_tokenizer.cc)
+target_link_libraries(qwen_tokenizer PUBLIC re2::re2)
 
 add_executable(main main.cpp)
 target_link_libraries(main PRIVATE qwen)
